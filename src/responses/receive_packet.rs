@@ -2,6 +2,7 @@ use super::{ Response, ResponseError };
 
 const COMMAND_ID: u8 = 0x90;
 
+#[allow(dead_code)]
 pub struct ZigbeeReceivePacket<'a> {
   destination: u64,
   network_address: u16,
@@ -9,7 +10,7 @@ pub struct ZigbeeReceivePacket<'a> {
   packet_broadcast: bool,
   packet_encrypted: bool,
   packet_end_device: bool,
-  data: &'a [u8]
+  pub data: &'a [u8]
 }
 
 fn buffer_to_u64(buffer: &[u8]) -> u64 {

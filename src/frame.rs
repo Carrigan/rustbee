@@ -2,7 +2,7 @@ use core::num::Wrapping;
 use super::commands::{ Command, BufferSizeError };
 
 pub struct Frame<'a> {
-    data: &'a [u8]
+    pub data: &'a [u8]
 }
 
 impl <'a> Frame<'a> {
@@ -16,7 +16,8 @@ impl <'a> Frame<'a> {
 
 enum FrameIteratorState {
     Delimiter,
-    Length,
+    LengthLsb,
+    LengthMsb,
     Data,
     Checksum,
     Done
@@ -35,20 +36,16 @@ impl <'a> Iterator for FrameIterator<'a> {
     fn next(&mut self) -> Option<u8> {
         let return_val: u8 = match self.state {
             FrameIteratorState::Delimiter => {
-                self.state = FrameIteratorState::Length;
+                self.state = FrameIteratorState::LengthMsb;
                 0x7E
             },
-            FrameIteratorState::Length => {
-                let length_byte = if self.state_index == 0 {
-                    self.state_index += 1;
-                    self.frame.data.len() / 256
-                } else {
-                    self.state = FrameIteratorState::Data;
-                    self.state_index = 0;
-                    self.frame.data.len() % 256
-                };
-
-                length_byte as u8
+            FrameIteratorState::LengthMsb => {
+                self.state = FrameIteratorState::LengthLsb;
+                (self.frame.data.len() / 256) as u8
+            },
+            FrameIteratorState::LengthLsb => {
+                self.state = FrameIteratorState::Data;
+                (self.frame.data.len() % 256) as u8
             },
             FrameIteratorState::Data => {
                 let current_byte = self.frame.data[self.state_index];

@@ -26,6 +26,7 @@ impl TryFrom<u8> for AtCommandResponseStatus {
   }
 }
 
+#[allow(dead_code)]
 pub struct AtCommandResponse {
   frame_id: u8,
   at_command: [u8; 2],

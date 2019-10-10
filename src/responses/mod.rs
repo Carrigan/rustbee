@@ -1,6 +1,8 @@
 pub mod at;
 pub mod receive_packet;
 
+pub use receive_packet::ZigbeeReceivePacket;
+
 #[derive(Debug, PartialEq)]
 pub enum ResponseError {
   IdError,
