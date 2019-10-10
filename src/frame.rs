@@ -1,7 +1,17 @@
 use std::num::Wrapping;
+use super::commands::{ Command, BufferSizeError };
 
 pub struct Frame<'a> {
     data: &'a [u8]
+}
+
+impl <'a> Frame<'a> {
+    pub fn from_command<T: Command>(command: T, buffer: &'a mut [u8]) -> Result<Self, BufferSizeError> {
+        match command.fill_buffer(buffer) {
+            Ok(data) => Ok(Frame { data }),
+            Err(BufferSizeError) => Err(BufferSizeError)
+        }
+    }
 }
 
 enum FrameIteratorState {
@@ -84,7 +94,7 @@ impl <'a> Frame<'a> {
 }
 
 #[test]
-fn test_serialize_works() {
+fn test_serialize() {
     let at_command: [u8; 5] = [0x08, 0x01, 0x4E, 0x4A, 0xFF];
     let frame = Frame::new(&at_command);
 
@@ -95,4 +105,37 @@ fn test_serialize_works() {
         assert_eq!(ch, expected[index]);
         index += 1;
     }
+}
+
+#[test]
+fn test_from_command_success() {
+    // Start with a purposefully small buffer
+    let mut buffer: [u8; 10] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let frame_id = 0x52;
+    let command = super::commands::at::AtCommand::new(frame_id, [b'N', b'J'], None);
+    let frame = Frame::from_command(command, &mut buffer[..]);
+
+    match frame {
+        Ok(frame) => {
+            let mut index = 0;
+            let expected: [u8; 8] = [0x7E, 0x00, 0x04, 0x08, frame_id, 0x4E, 0x4A, 0x0D];
+            for ch in frame.serialize() {
+                assert_eq!(ch, expected[index]);
+                index += 1;
+            }
+        },
+        _ => {
+            assert!(false);
+        }
+    }
+}
+
+#[test]
+fn test_from_command_failure() {
+    // Start with a purposefully small buffer
+    let mut buffer: [u8; 1] = [0];
+    let command = super::commands::at::AtCommand::new(0x52, [b'N', b'J'], None);
+    let f = Frame::from_command(command, &mut buffer[..]);
+
+    assert_eq!(f.is_err(), true);
 }
