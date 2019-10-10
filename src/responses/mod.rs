@@ -1,4 +1,5 @@
 pub mod at;
+pub mod receive_packet;
 
 #[derive(Debug, PartialEq)]
 pub enum ResponseError {
@@ -7,7 +8,7 @@ pub enum ResponseError {
   EnumComparisonError,
 }
 
-pub trait Response<T> {
+pub trait Response<'a, T> {
   fn respond_to(id: u8) -> bool;
-  fn parse<'a>(buffer: &'a [u8]) -> Result<T, ResponseError>;
+  fn parse(buffer: &'a [u8]) -> Result<T, ResponseError>;
 }

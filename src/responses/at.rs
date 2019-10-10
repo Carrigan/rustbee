@@ -33,12 +33,12 @@ pub struct AtCommandResponse {
   command_data: Option<u8>,
 }
 
-impl Response<AtCommandResponse> for AtCommandResponse {
+impl <'a> Response<'a, AtCommandResponse> for AtCommandResponse {
   fn respond_to(id: u8) -> bool {
     COMMAND_ID == id
   }
 
-  fn parse<'a>(buffer: &'a [u8]) -> Result<Self, ResponseError> {
+  fn parse(buffer: &[u8]) -> Result<Self, ResponseError> {
     if buffer.len() < 5 || buffer.len() > 6 { return Err(ResponseError::SizeIncorrectError); }
     if buffer[0] != COMMAND_ID { return Err(ResponseError::IdError); }
 
