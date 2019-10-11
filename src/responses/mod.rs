@@ -1,7 +1,8 @@
-pub mod at;
+pub mod at_command_response;
 pub mod receive_packet;
 
 pub use receive_packet::ZigbeeReceivePacket;
+pub use at_command_response::{ AtCommandResponse, AtCommandResponseStatus };
 
 #[derive(Debug, PartialEq)]
 pub enum ResponseError {

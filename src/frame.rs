@@ -1,11 +1,31 @@
 use core::num::Wrapping;
 use super::commands::{ Command, BufferSizeError };
 
+/// Representation of a single Frame.
 pub struct Frame<'a> {
     pub data: &'a [u8]
 }
 
 impl <'a> Frame<'a> {
+    /// Builds a new frame given a borrowed slice of an array of u8s.
+    pub fn new(data: &'a [u8]) -> Self {
+        Frame { data }
+    }
+
+    /// Uses a FrameIterator to return an iterator that can be used to
+    /// return a serialized message byte by byte.
+    pub fn serialize(&self) -> FrameIterator {
+        FrameIterator {
+            frame: &self,
+            state: FrameIteratorState::Delimiter,
+            state_index: 0,
+            checksum: Wrapping(0)
+        }
+    }
+
+    /// The `from_command` function is used to fill array `buffer` using
+    /// the data contained in command `command`. The only failure condition
+    /// is if a buffer is supplied with insufficient space.
     pub fn from_command<T: Command>(command: T, buffer: &'a mut [u8]) -> Result<Self, BufferSizeError> {
         match command.fill_buffer(buffer) {
             Ok(data) => Ok(Frame { data }),
@@ -23,6 +43,10 @@ enum FrameIteratorState {
     Done
 }
 
+/// Since a Frame only contains a single field with a payload, the
+/// FrameIterator represents the data needed to iterating through
+/// a full frame including the delimiter, length bytes, data, and
+/// checksum.
 pub struct FrameIterator<'a> {
     frame: &'a Frame<'a>,
     state: FrameIteratorState,
@@ -75,20 +99,7 @@ impl <'a> Iterator for FrameIterator<'a> {
     }
 }
 
-impl <'a> Frame<'a> {
-    pub fn new(data: &'a [u8]) -> Self {
-        Frame { data }
-    }
 
-    pub fn serialize(&self) -> FrameIterator {
-        FrameIterator {
-            frame: &self,
-            state: FrameIteratorState::Delimiter,
-            state_index: 0,
-            checksum: Wrapping(0)
-        }
-    }
-}
 
 #[test]
 fn test_serialize() {
@@ -109,7 +120,7 @@ fn test_from_command_success() {
     // Start with a purposefully small buffer
     let mut buffer: [u8; 10] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let frame_id = 0x52;
-    let command = super::commands::at::AtCommand::new(frame_id, [b'N', b'J'], None);
+    let command = super::commands::AtCommand::new(frame_id, [b'N', b'J'], None);
     let frame = Frame::from_command(command, &mut buffer[..]);
 
     match frame {
@@ -131,7 +142,7 @@ fn test_from_command_success() {
 fn test_from_command_failure() {
     // Start with a purposefully small buffer
     let mut buffer: [u8; 1] = [0];
-    let command = super::commands::at::AtCommand::new(0x52, [b'N', b'J'], None);
+    let command = super::commands::AtCommand::new(0x52, [b'N', b'J'], None);
     let f = Frame::from_command(command, &mut buffer[..]);
 
     assert_eq!(f.is_err(), true);

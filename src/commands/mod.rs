@@ -1,7 +1,8 @@
-pub mod at;
+pub mod at_command;
 pub mod transmit_request;
 
 pub use transmit_request::TransmitRequestCommand;
+pub use at_command::AtCommand;
 
 #[derive(Debug)]
 pub struct BufferSizeError;

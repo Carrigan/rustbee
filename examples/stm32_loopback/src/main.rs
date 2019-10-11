@@ -5,10 +5,9 @@ extern crate panic_halt;
 use core::num::Wrapping;
 
 use rustbee::{
-    buffer::{ FrameBuffer },
-    frame::{ Frame },
-    commands::{ TransmitRequestCommand },
-    responses::{ Response, ZigbeeReceivePacket }
+    Frame, FrameBuffer,
+    commands::TransmitRequestCommand,
+    responses::ZigbeeReceivePacket
 };
 
 use cortex_m::asm;
@@ -76,11 +75,10 @@ fn main() -> ! {
             }
 
             // If we can't parse, keep going
-            let received_message = ZigbeeReceivePacket::parse(received_frame.data);
-            if received_message.is_err() {
-                continue;
+            let received_message = match ZigbeeReceivePacket::parse(received_frame.data) {
+                Ok(msg) => msg,
+                _ => continue
             }
-            let received_message = received_message.unwrap();
 
             // Build and send the response
             let response_msg = TransmitRequestCommand::broadcast(frame_id.0, received_message.data);

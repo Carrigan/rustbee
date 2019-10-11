@@ -10,6 +10,8 @@ pub enum FrameBufferState {
   ReceivingChecksum
 }
 
+/// A state machine that handles receiving bytes coming from an XBee and
+/// alerting the consuming application when a full frame has been received.
 pub struct FrameBuffer <'a> {
   // The state of the receive buffer
   state: FrameBufferState,
@@ -26,6 +28,7 @@ pub struct FrameBuffer <'a> {
 }
 
 impl <'a> FrameBuffer <'a> {
+  /// Create a new `FrameBuffer` with borrowed array space `buffer`.
   pub fn new(buffer: &'a mut [u8]) -> Self {
     Self {
       state: FrameBufferState::WaitingForDelimiter,
@@ -36,7 +39,9 @@ impl <'a> FrameBuffer <'a> {
     }
   }
 
-  pub fn push(&mut self, received: u8) -> Option<Frame> {
+  /// Receive a single byte of data from the XBee device and return
+  /// a Frame if completed.
+  pub fn receive(&mut self, received: u8) -> Option<Frame> {
     match self.state {
       FrameBufferState::WaitingForDelimiter => {
         if received == 0x7E {
@@ -109,7 +114,7 @@ fn test_buffer_receive() {
 
   // Iterate through and check that they are equal
   for character in send_frame.serialize() {
-    if let Some(received_frame) = frame_buffer.push(character) {
+    if let Some(received_frame) = frame_buffer.receive(character) {
       assert_eq!(send_frame.data, received_frame.data);
       return;
     }

@@ -1,6 +1,6 @@
 use super::{ Command, BufferSizeError };
 
-const AT_COMMAND_ID: u8 = 0x08;
+const COMMAND_ID: u8 = 0x08;
 
 pub struct AtCommand {
   frame_id: u8,
@@ -18,7 +18,7 @@ impl Command for AtCommand {
   fn fill_buffer<'a>(&self, buffer: &'a mut [u8]) -> Result<&'a [u8], BufferSizeError> {
     if buffer.len() < 4 { return Err(BufferSizeError); }
 
-    buffer[0] = AT_COMMAND_ID;
+    buffer[0] = COMMAND_ID;
     buffer[1] = self.frame_id;
     buffer[2] = self.at_command[0];
     buffer[3] = self.at_command[1];
